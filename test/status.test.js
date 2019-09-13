@@ -56,11 +56,13 @@ describe("status", () => {
           Promise.resolve([
             {
               fileName: "20160509113224-first_migration.js",
-              appliedAt: new Date("2016-06-03T20:10:12.123Z")
+              appliedAt: new Date("2016-06-03T20:10:12.123Z"),
+              hash: "66f8df53c2c0ef4daae328176516e283"
             },
             {
               fileName: "20160512091701-second_migration.js",
-              appliedAt: new Date("2016-06-09T20:10:12.123Z")
+              appliedAt: new Date("2016-06-09T20:10:12.123Z"),
+              hash: "55af6d93062ad9cf8fe0b73278bde7ab"
             }
           ])
         )
@@ -116,6 +118,7 @@ describe("status", () => {
     }
   });
 
+
   it("should get the list of files in the migrations directory", async () => {
     await status(db);
     expect(migrationsDir.getFileNames.called).to.equal(true);
@@ -158,15 +161,18 @@ describe("status", () => {
     expect(statusItems).to.deep.equal([
       {
         appliedAt: "2016-06-03T20:10:12.123Z",
-        fileName: "20160509113224-first_migration.js"
+        fileName: "20160509113224-first_migration.js",
+        hash: "66f8df53c2c0ef4daae328176516e283"
       },
       {
         appliedAt: "2016-06-09T20:10:12.123Z",
-        fileName: "20160512091701-second_migration.js"
+        fileName: "20160512091701-second_migration.js",
+        hash: "55af6d93062ad9cf8fe0b73278bde7ab"
       },
       {
         appliedAt: "PENDING",
-        fileName: "20160513155321-third_migration.js"
+        fileName: "20160513155321-third_migration.js",
+        hash: "20b87db7498aa7bbf3e5a435d3f86e7"
       }
     ]);
   });

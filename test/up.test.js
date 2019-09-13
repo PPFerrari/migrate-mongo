@@ -27,7 +27,8 @@ describe("up", () => {
         },
         {
           fileName: "20160607173840-first_pending_migration.js",
-          appliedAt: "PENDING"
+          appliedAt: "PENDING",
+          hash: "66f8df53c2c0ef4daae328176516e283"
         },
         {
           fileName: "20160608060209-second_pending_migration.js",
@@ -144,7 +145,8 @@ describe("up", () => {
     expect(changelogCollection.insertOne.callCount).to.equal(2);
     expect(changelogCollection.insertOne.getCall(0).args[0]).to.deep.equal({
       appliedAt: new Date("2016-06-09T08:07:00.077Z"),
-      fileName: "20160607173840-first_pending_migration.js"
+      fileName: "20160607173840-first_pending_migration.js",
+      hash: "66f8df53c2c0ef4daae328176516e283"
     });
     clock.restore();
   });

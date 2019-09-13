@@ -32,7 +32,8 @@
     "fs-extra": "8.1.0",
     "lodash": "4.17.15",
     "mongodb": "3.3.1",
-    "p-each-series": "2.1.0"
+    "p-each-series": "2.1.0",
+    "hasha": "5.0.0"
   },
   "devDependencies": {
     "chai": "4.2.0",

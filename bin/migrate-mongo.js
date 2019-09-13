@@ -18,7 +18,7 @@ function handleError(err) {
 }
 
 function printStatusTable(statusItems) {
-  const table = new Table({ head: ["Filename", "Applied At"] });
+  const table = new Table({ head: ["Filename", "Applied At", "Hash"] });
   statusItems.forEach(item => table.push(_.values(item)));
   console.log(table.toString());
 }

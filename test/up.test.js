@@ -160,17 +160,17 @@ describe("up", () => {
   });
 
   // // TODO this test first also had a list of migrated files (on error), review !
-  // it("should stop migrating when an error occurred and yield the error", async () => {
-  //   secondPendingMigration.up.returns(Promise.reject(new Error("Nope")));
-  //   try {
-  //     await up(db);
-  //     expect.fail("Error was not thrown");
-  //   } catch (err) {
-  //     expect(err.message).to.deep.equal(
-  //       "Could not migrate up 20160608060209-second_pending_migration.js: Nope"
-  //     );
-  //   }
-  // });
+  it("should stop migrating when an error occurred and yield the error", async () => {
+    secondPendingMigration.up.returns(Promise.reject(new Error("Nope")));
+    try {
+      await up(db);
+      expect.fail("Error was not thrown");
+    } catch (err) {
+      expect(err.message).to.deep.equal(
+        "Could not migrate up 20160608060209-second_pending_migration.js: Nope"
+      );
+    }
+  });
 
   it("should yield an error + items already migrated when unable to update the changelog", async () => {
     changelogCollection.insertOne

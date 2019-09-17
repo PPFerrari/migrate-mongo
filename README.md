@@ -337,3 +337,8 @@ Close the database connection
 const db = await database.connect();
 await db.close()
 ```
+
+
+## Changelog
+
+2019-09-16 - Added hash calculcation and check for migrating files (fork v6.0.3, original v6.0.2)

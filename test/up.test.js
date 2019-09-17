@@ -135,6 +135,8 @@ describe("up", () => {
     up = loadUpWithInjectedMocks();
     await up(db);
   });
+
+  
   it("should populate the changelog with info about the upgraded migrations", async () => {
     const clock = sinon.useFakeTimers(
       new Date("2016-06-09T08:07:00.077Z").getTime()

@@ -18,21 +18,22 @@ describe("up", () => {
     return sinon.stub().returns(
       Promise.resolve([
         {
-          fileName: "20160605123224-first_applied_migration.js",
+          fileName: "20160509113224-first_migration.js",
           appliedAt: new Date()
         },
         {
-          fileName: "20160606093207-second_applied_migration.js",
+          fileName: "20160512091701-second_migration.js",
           appliedAt: new Date()
         },
         {
-          fileName: "20160607173840-first_pending_migration.js",
+          fileName: "20160512091701-pending_first_003.js",
+          appliedAt: "PENDING",
+          hash: "75b7e5769f897d6e238d5371cd6aeb44"
+        },
+        {
+          fileName: "20160512091701-pending_second_002.js",
           appliedAt: "PENDING",
           hash: "66f8df53c2c0ef4daae328176516e283"
-        },
-        {
-          fileName: "20160608060209-second_pending_migration.js",
-          appliedAt: "PENDING"
         }
       ])
     );
@@ -42,7 +43,8 @@ describe("up", () => {
     return {
       shouldExist: sinon.stub().returns(Promise.resolve()),
       read: sinon.stub().returns({
-        changelogCollectionName: "changelog"
+        changelogCollectionName: "changelog",
+        migrationsDir: "test/migrations"
       })
     };
   }
@@ -51,10 +53,10 @@ describe("up", () => {
     const mock = {};
     mock.loadMigration = sinon.stub();
     mock.loadMigration
-      .withArgs("20160607173840-first_pending_migration.js")
+      .withArgs("20160512091701-pending_first_003.js")
       .returns(Promise.resolve(firstPendingMigration));
     mock.loadMigration
-      .withArgs("20160608060209-second_pending_migration.js")
+      .withArgs("20160512091701-pending_second_002.js")
       .returns(Promise.resolve(secondPendingMigration));
     return mock;
   }
@@ -111,10 +113,10 @@ describe("up", () => {
     expect(migrationsDir.loadMigration.called).to.equal(true);
     expect(migrationsDir.loadMigration.callCount).to.equal(2);
     expect(migrationsDir.loadMigration.getCall(0).args[0]).to.equal(
-      "20160607173840-first_pending_migration.js"
+      "20160512091701-pending_first_003.js"
     );
     expect(migrationsDir.loadMigration.getCall(1).args[0]).to.equal(
-      "20160608060209-second_pending_migration.js"
+      "20160512091701-pending_second_002.js"
     );
   });
 
@@ -147,8 +149,8 @@ describe("up", () => {
     expect(changelogCollection.insertOne.callCount).to.equal(2);
     expect(changelogCollection.insertOne.getCall(0).args[0]).to.deep.equal({
       appliedAt: new Date("2016-06-09T08:07:00.077Z"),
-      fileName: "20160607173840-first_pending_migration.js",
-      hash: "66f8df53c2c0ef4daae328176516e283"
+      fileName: "20160512091701-pending_first_003.js",
+      hash: "1dfa4fb994efc619e1d999c58a3f44d3"
     });
     clock.restore();
   });
@@ -156,28 +158,32 @@ describe("up", () => {
   it("should yield a list of upgraded migration file names", async () => {
     const upgradedFileNames = await up(db);
     expect(upgradedFileNames).to.deep.equal([
-      "20160607173840-first_pending_migration.js",
-      "20160608060209-second_pending_migration.js"
+      "20160512091701-pending_first_003.js",
+      "20160512091701-pending_second_002.js"
     ]);
   });
 
   // // TODO this test first also had a list of migrated files (on error), review !
   it("should stop migrating when an error occurred and yield the error", async () => {
-    secondPendingMigration.up.returns(Promise.reject(new Error("Nope")));
     try {
+      const p = Promise.reject(new Error("Nope"));
+      p.catch(() => {});
+      secondPendingMigration.up.returns(p);
+
       await up(db);
       expect.fail("Error was not thrown");
     } catch (err) {
       expect(err.message).to.deep.equal(
-        "Could not migrate up 20160608060209-second_pending_migration.js: Nope"
+        "Could not migrate up 20160512091701-pending_second_002.js: Nope"
       );
     }
   });
 
   it("should yield an error + items already migrated when unable to update the changelog", async () => {
-    changelogCollection.insertOne
-      .onSecondCall()
-      .returns(Promise.reject(new Error("Kernel panic")));
+    const p = Promise.reject(new Error("Kernel panic"))
+    p.catch(() => {});
+    changelogCollection.insertOne.onSecondCall().returns(p);
+
     try {
       await up(db);
       expect.fail("Error was not thrown");

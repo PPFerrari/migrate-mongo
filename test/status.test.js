@@ -20,7 +20,7 @@ describe("status", () => {
           Promise.resolve([
             "20160509113224-first_migration.js",
             "20160512091701-second_migration.js",
-            "20160513155321-third_migration.js"
+            "20160512091701-third_migration.js"
           ])
         )
     };
@@ -30,7 +30,8 @@ describe("status", () => {
     return {
       shouldExist: sinon.stub().returns(Promise.resolve()),
       read: sinon.stub().returns({
-        changelogCollectionName: "changelog"
+        changelogCollectionName: "changelog",
+        migrationsDir: "test/migrations"
       })
     };
   }
@@ -48,6 +49,8 @@ describe("status", () => {
     return mock;
   }
 
+
+
   function mockChangelogCollection() {
     return {
       deleteOne: sinon.stub().returns(Promise.resolve()),
@@ -56,11 +59,13 @@ describe("status", () => {
           Promise.resolve([
             {
               fileName: "20160509113224-first_migration.js",
-              appliedAt: new Date("2016-06-03T20:10:12.123Z")
+              appliedAt: new Date("2016-06-03T20:10:12.123Z"),
+              hash: "1dfa4fb994efc619e1d999c58a3f44d3"
             },
             {
               fileName: "20160512091701-second_migration.js",
-              appliedAt: new Date("2016-06-09T20:10:12.123Z")
+              appliedAt: new Date("2016-06-09T20:10:12.123Z"),
+              hash: "66f8df53c2c0ef4daae328176516e283"
             }
           ])
         )
@@ -68,9 +73,10 @@ describe("status", () => {
     };
   }
 
+
+
   beforeEach(() => {
     changelogCollection = mockChangelogCollection();
-
     migrationsDir = mockMigrationsDir();
     configFile = mockConfigFile();
     fs = mockFs();
@@ -82,10 +88,14 @@ describe("status", () => {
     });
   });
 
+
+
   it("should check that the migrations directory exists", async () => {
     await status(db);
     expect(migrationsDir.shouldExist.called).to.equal(true);
   });
+
+
 
   it("should yield an error when the migrations directory does not exist", async () => {
     migrationsDir.shouldExist.returns(
@@ -99,10 +109,14 @@ describe("status", () => {
     }
   });
 
+
+
   it("should check that the config file exists", async () => {
     await status(db);
     expect(configFile.shouldExist.called).to.equal(true);
   });
+
+
 
   it("should yield an error when config file does not exist", async () => {
     configFile.shouldExist.returns(
@@ -116,10 +130,14 @@ describe("status", () => {
     }
   });
 
+
+
   it("should get the list of files in the migrations directory", async () => {
     await status(db);
     expect(migrationsDir.getFileNames.called).to.equal(true);
   });
+
+
 
   it("should yield errors that occurred when getting the list of files in the migrations directory", async () => {
     migrationsDir.getFileNames.returns(
@@ -133,11 +151,15 @@ describe("status", () => {
     }
   });
 
+
+
   it("should fetch the content of the changelog collection", async () => {
     await status(db);
     expect(changelogCollection.find.called).to.equal(true);
     expect(changelogCollection.find({}).toArray.called).to.equal(true);
   });
+
+
 
   it("should yield errors that occurred when fetching the changelog collection", async () => {
     changelogCollection
@@ -153,21 +175,49 @@ describe("status", () => {
     }
   });
 
+
+
   it("should yield an array that indicates the status of the migrations in the directory", async () => {
     const statusItems = await status(db);
     expect(statusItems).to.deep.equal([
       {
         appliedAt: "2016-06-03T20:10:12.123Z",
-        fileName: "20160509113224-first_migration.js"
+        fileName: "20160509113224-first_migration.js",
+        hash: "1dfa4fb994efc619e1d999c58a3f44d3"
       },
       {
         appliedAt: "2016-06-09T20:10:12.123Z",
-        fileName: "20160512091701-second_migration.js"
+        fileName: "20160512091701-second_migration.js",
+        hash: "66f8df53c2c0ef4daae328176516e283"
       },
       {
         appliedAt: "PENDING",
-        fileName: "20160513155321-third_migration.js"
+        fileName: "20160512091701-third_migration.js",
+        hash: ""
       }
     ]);
   });
+
+
+  it("should yield an error if hash of file has changed", async() => {
+    changelogCollection.find({}).toArray.returns(Promise.resolve([
+      {
+        appliedAt: new Date("2016-06-03T20:10:12.123Z"),
+        fileName: "20160509113224-first_migration.js",
+        hash: "1dfa4fb994e4c619e1d999c58a3f44d3"
+      },
+      {
+        appliedAt: new Date("2016-06-09T20:10:12.123Z"),
+        fileName: "20160512091701-second_migration.js",
+        hash: "66f8df53c2c0ef4daae328176516e283"
+      }
+    ]))
+
+    try {
+      await status(db)
+      expect.fail("Error was not thrown");
+    } catch (err) {
+       expect(err.message).to.equal("Not able to get status: Hash calculated is different from the one in the changelog collection! Exit");
+    }
+  })
 });

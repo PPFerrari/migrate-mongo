@@ -217,7 +217,7 @@ describe("status", () => {
       await status(db)
       expect.fail("Error was not thrown");
     } catch (err) {
-       expect(err.message).to.equal("Hash calculated is different from the one in the changelog collection! Exit");
+       expect(err.message).to.equal("Not able to get status: Hash calculated is different from the one in the changelog collection! Exit");
     }
   })
 });

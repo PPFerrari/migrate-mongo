@@ -58,7 +58,7 @@ Edit the migrate-mongo-config.js file. An object or promise can be returned. Mak
 module.exports = {
   mongodb: {
     // TODO Change (or review) the url to your MongoDB:
-    url: "mongodb://localhost:27017",
+    url: "mongodb://localhost:27017", // also support replica set URL
 
     // TODO Change this to your database name:
     databaseName: "YOURDATABASENAME",
@@ -67,6 +67,7 @@ module.exports = {
       useNewUrlParser: true // removes a deprecation warning when connecting
       //   connectTimeoutMS: 3600000, // increase connection timeout to 1 hour
       //   socketTimeoutMS: 3600000, // increase socket timeout to 1 hour
+      //   replicaSet: '', // name of the replica set, if present
     }
   },
 
@@ -93,6 +94,9 @@ module.exports = {
   up(db) {
     // TODO write your migration here. Return a Promise (and/or use async & await).
     // See https://github.com/seppevs/migrate-mongo/#creating-a-new-migration-script
+    // When the script has to be executed in a transaction, the db variable will also
+    // contain the session for the transaction, to be passed as the last parameter of the 
+    // operation function (in the example below, as last parameter of the updateOne function)
     // Example:
     // return db.collection('albums').updateOne({artist: 'The Beatles'}, {$set: {blacklisted: true}});
   },
@@ -214,6 +218,28 @@ $ migrate-mongo status
 │ 20160608155948-blacklist_the_beatles.js │ PENDING    │
 └─────────────────────────────────────────┴────────────┘
 ````
+
+## Use of Transactions
+
+Transactions have been added to MongoDB since version 4.0. They work with replica set, or with a MongoDB cluster (from MongoDB version 4.2).
+This module support migrations scripts to be execute within a transaction. 
+For each transaction, you must insert a init script, that will be not execute in the transaction itself, but it will execute any action that cannot be execute in the transaction (like creating collections).
+
+## Files naming convention
+
+Normal migration script: 
+
+````V[VERSION]__mydescriptionhere.js````
+
+Transaction migration script:
+
+````V[VERSION]__T[TRANSACTION-NUMBER]__[SCRIPT-ORDER]__mydescriptionhere.js````
+
+Note:
+
+- VERSION only gets single/double digit number for now. It does not support version with any other char;
+- TRANSACTION-NUMBER used to know which file are part of a specific transaction;
+- SCRIPT_ORDER only used with transaction, needed to know in which order the module has to execute the scripts;
 
 ## Extra tips and tricks
 
@@ -341,4 +367,4 @@ await db.close()
 
 ## Changelog
 
-2019-09-16 - Added hash calculcation and check for migrating files (fork v6.0.3, original v6.0.2)
+2019-09-16 - Added hash calculcation (fork v6.0.3, original v6.0.2)

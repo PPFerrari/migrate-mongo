@@ -1,18 +1,42 @@
 # migrate-mongo
-A database migration tool for MongoDB in Node. 
+A database migration tool for MongoDB in Node.
 
-✨ [![Build Status](http://img.shields.io/travis/seppevs/migrate-mongo.svg?style=flat)](https://travis-ci.org/seppevs/migrate-mongo) [![Coverage Status](https://coveralls.io/repos/github/seppevs/migrate-mongo/badge.svg?branch=master)](https://coveralls.io/r/seppevs/migrate-mongo) [![NPM](http://img.shields.io/npm/v/migrate-mongo.svg?style=flat)](https://www.npmjs.org/package/migrate-mongo) [![Downloads](http://img.shields.io/npm/dm/migrate-mongo.svg?style=flat)](https://www.npmjs.org/package/migrate-mongo) [![Dependencies](https://david-dm.org/seppevs/migrate-mongo.svg)](https://david-dm.org/seppevs/migrate-mongo) [![Known Vulnerabilities](https://snyk.io/test/github/seppevs/migrate-mongo/badge.svg)](https://snyk.io/test/github/seppevs/migrate-mongo) ✨
+## Changelog
 
-<a href='https://ko-fi.com/D1D5O6O6' target='_blank'><img height='24' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi2.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+2019-09-16 - Added hash calculcation (v1.0.0)
+2019-09-30 - Added basic support for transaction (v1.1.0)
 
+## Files naming convention
+
+Normal migration script:
+
+````V[VERSION]__mydescriptionhere.js````
+
+Transaction migration script:
+
+````V[VERSION]__T[TRANSACTION-NUMBER]__[SCRIPT-ORDER]__mydescriptionhere.js````
+
+## Use of Transactions
+
+Transactions have been added to MongoDB since version 4.0. They work with replica set, or with a MongoDB cluster (from MongoDB version 4.2).
+This module support migrations scripts to be execute within a transaction. 
+For each transaction, you must insert a init script, that will be not execute in the transaction itself, but it will execute any action that cannot be execute in the transaction (like creating collections).
+
+Note:
+
+- VERSION only gets single/double digit number for now. It does not support version with any other char;
+- TRANSACTION-NUMBER IS used to know which file are part of a specific transaction;
+- SCRIPT_ORDER is used only with transactions, it helps to understand in which order the scripts have to be executed;
 
 ## Installation
+
 ````bash
 $ npm install -g migrate-mongo
 ````
 
 ## CLI Usage
-````
+
+````bash
 $ migrate-mongo
 Usage: migrate-mongo [options] [command]
 
@@ -32,33 +56,39 @@ Usage: migrate-mongo [options] [command]
 ````
 
 ## Quickstart
+
 ### Initialize a new project
+
 Make sure you have [Node.js](https://nodejs.org/en/) 8.0.0 (or higher) installed.  
 
 Create a directory where you want to store your migrations for your mongo database (eg. 'albums' here) and cd into it
+
 ````bash
 $ mkdir albums-migrations
 $ cd albums-migrations
 ````
 
 Initialize a new migrate-mongo project
+
 ````bash
 $ migrate-mongo init
 Initialization successful. Please edit the generated migrate-mongo-config.js file
 ````
 
 The above command did two things: 
-1. create a sample 'migrate-mongo-config.js' file and 
+
+1. create a sample 'migrate-mongo-config.js' file and
 2. create a 'migrations' directory
 
-Edit the migrate-mongo-config.js file. An object or promise can be returned. Make sure you change the mongodb url: 
+Edit the migrate-mongo-config.js file. An object or promise can be returned. Make sure you change the mongodb url:
+
 ````javascript
 // In this file you can configure migrate-mongo
 
 module.exports = {
   mongodb: {
     // TODO Change (or review) the url to your MongoDB:
-    url: "mongodb://localhost:27017",
+    url: "mongodb://localhost:27017", // also support replica set URL
 
     // TODO Change this to your database name:
     databaseName: "YOURDATABASENAME",
@@ -67,6 +97,7 @@ module.exports = {
       useNewUrlParser: true // removes a deprecation warning when connecting
       //   connectTimeoutMS: 3600000, // increase connection timeout to 1 hour
       //   socketTimeoutMS: 3600000, // increase socket timeout to 1 hour
+      //   replicaSet: '', // name of the replica set, if present
     }
   },
 
@@ -79,20 +110,26 @@ module.exports = {
 ````
 
 ### Creating a new migration script
+
 To create a new database migration script, just run the ````migrate-mongo create [description]```` command.
 
 For example:
+
 ````bash
 $ migrate-mongo create blacklist_the_beatles
 Created: migrations/20160608155948-blacklist_the_beatles.js
 ````
 
 A new migration file is created in the 'migrations' directory:
+
 ````javascript
 module.exports = {
   up(db) {
     // TODO write your migration here. Return a Promise (and/or use async & await).
     // See https://github.com/seppevs/migrate-mongo/#creating-a-new-migration-script
+    // When the script has to be executed in a transaction, the db variable will also
+    // contain the session for the transaction, to be passed as the last parameter of the 
+    // operation function (in the example below, as last parameter of the updateOne function)
     // Example:
     // return db.collection('albums').updateOne({artist: 'The Beatles'}, {$set: {blacklisted: true}});
   },
@@ -109,16 +146,19 @@ Edit this content so it actually performs changes to your database. Don't forget
 The ````db```` object contains [the official MongoDB db object](https://www.npmjs.com/package/mongodb)
 
 There are 3 options to implement the `up` and `down` functions of your migration: 
+
 1. Return a Promises
 2. Use async-await 
 3. Call a callback (deprecated)
 
 Always make sure the implementation matches the function signature:
-* `function up(db) { /* */ }` should return `Promise`
-* `function async up(db) { /* */ }` should contain `await` keyword(s) and return `Promise`
-* `function up(db, next) { /* */ }` should callback `next`
+
+- `function up(db) { /* */ }` should return `Promise`
+- `function async up(db) { /* */ }` should contain `await` keyword(s) and return `Promise`
+- `function up(db, next) { /* */ }` should callback `next`
 
 #### Example 1: Return a Promise
+
 ````javascript
 module.exports = {
   up(db) {
@@ -132,6 +172,7 @@ module.exports = {
 ````
 
 #### Example 2: Use async & await
+
 Async & await is especially useful if you want to perform multiple operations against your MongoDB in one migration.
 
 ````javascript
@@ -149,6 +190,7 @@ module.exports = {
 ````
 
 #### Example 3: Call a callback (deprecated)
+
 Callbacks are supported for backwards compatibility.
 New migration scripts should be written using Promises and/or async & await. It's easier to read and write.
 
@@ -165,6 +207,7 @@ module.exports = {
 ````
 
 ### Checking the status of the migrations
+
 At any time, you can check which migrations are applied (or not)
 
 ````bash
@@ -174,12 +217,12 @@ $ migrate-mongo status
 ├─────────────────────────────────────────┼────────────┤
 │ 20160608155948-blacklist_the_beatles.js │ PENDING    │
 └─────────────────────────────────────────┴────────────┘
-
 ````
 
-
 ### Migrate up
+
 This command will apply all pending migrations
+
 ````bash
 $ migrate-mongo up
 MIGRATED UP: 20160608155948-blacklist_the_beatles.js
@@ -188,6 +231,7 @@ MIGRATED UP: 20160608155948-blacklist_the_beatles.js
 If an an error occurred, it will stop and won't continue with the rest of the pending migrations
 
 If we check the status again, we can see the last migration was successfully applied:
+
 ````bash
 $ migrate-mongo status
 ┌─────────────────────────────────────────┬──────────────────────────┐
@@ -198,6 +242,7 @@ $ migrate-mongo status
 ````
 
 ### Migrate down
+
 With this command, migrate-mongo will revert (only) the last applied migration
 
 ````bash
@@ -206,6 +251,7 @@ MIGRATED DOWN: 20160608155948-blacklist_the_beatles.js
 ````
 
 If we check the status again, we see that the reverted migration is pending again:
+
 ````bash
 $ migrate-mongo status
 ┌─────────────────────────────────────────┬────────────┐
@@ -218,10 +264,11 @@ $ migrate-mongo status
 ## Extra tips and tricks
 
 ### Using a custom config file
+
 All actions (except ```init```) accept an optional ````-f```` or ````--file```` option to specify a path to a custom config file.
 By default, migrate-mongo will look for a ````migrate-mongo-config.js```` config file in of the current directory.
 
-#### Example:
+#### Example
 
 ````bash
 $ migrate-mongo status -f '~/configs/albums-migrations.js'
@@ -234,12 +281,13 @@ $ migrate-mongo status -f '~/configs/albums-migrations.js'
 ````
 
 ### Using npm packages in your migration scripts
+
 You can use use Node.js modules (or require other modules) in your migration scripts.
 It's even possible to use npm modules, just provide a `package.json` file in the root of your migration project:
 
 ````bash
-$ cd albums-migrations
-$ npm init --yes
+cd albums-migrations
+npm init --yes
 ````
 
 Now you have a package.json file, and you can install your favorite npm modules that might help you in your migration scripts.
@@ -262,12 +310,14 @@ const {
 ### `init() → Promise`
 
 Initialize a new migrate-mongo project
+
 ```javascript
 await init();
 ```
 
 The above command did two things: 
-1. create a sample `migrate-mongo-config.js` file and 
+
+1. create a sample `migrate-mongo-config.js` file and
 2. create a `migrations` directory
 
 Edit the `migrate-mongo-config.js` file. Make sure you change the mongodb url.
@@ -275,6 +325,7 @@ Edit the `migrate-mongo-config.js` file. Make sure you change the mongodb url.
 ### `create(description) → Promise<fileName>`
 
 For example:
+
 ```javascript
 const fileName = await create('blacklist_the_beatles');
 console.log('Created:', fileName);
@@ -331,14 +382,10 @@ migrationStatus.forEach(({ fileName, appliedAt }) => console.log(fileName, ':', 
 ```
 
 ### `db.close() → Promise`
+
 Close the database connection
 
 ```javascript
 const db = await database.connect();
 await db.close()
 ```
-
-
-## Changelog
-
-2019-09-16 - Added hash calculcation and check for migrating files (fork v6.0.3, original v6.0.2)

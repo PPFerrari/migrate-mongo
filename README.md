@@ -19,8 +19,8 @@ Transaction migration script:
 ## Use of Transactions
 
 Transactions have been added to MongoDB since version 4.0. They work with replica set, or with a MongoDB cluster (from MongoDB version 4.2).
-This module support migrations scripts to be execute within a transaction. 
-For each transaction, you must insert a init script, that will be not execute in the transaction itself, but it will execute any action that cannot be execute in the transaction (like creating collections).
+This module support migrations scripts to be execute within a transaction.
+For each transaction, you must insert a init script, that will be not executed in the transaction itself, but it will execute all actions which have to be executed outside of a transaction (like creating new collections).
 
 Note:
 
@@ -64,8 +64,8 @@ Make sure you have [Node.js](https://nodejs.org/en/) 8.0.0 (or higher) installed
 Create a directory where you want to store your migrations for your mongo database (eg. 'albums' here) and cd into it
 
 ````bash
-$ mkdir albums-migrations
-$ cd albums-migrations
+mkdir albums-migrations
+cd albums-migrations
 ````
 
 Initialize a new migrate-mongo project

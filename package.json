@@ -1,7 +1,7 @@
 {
-  "name": "migrate-mongo",
+  "name": "acn-migrate-mongo",
   "version": "1.1.0",
-  "description": "A database migration tool for MongoDB in Node",
+  "description": "A database migration tool for MongoDB in Node, based on the migrate-mongo module",
   "main": "lib/migrate-mongo.js",
   "bin": {
     "migrate-mongo": "bin/migrate-mongo.js"
@@ -11,15 +11,11 @@
     "test-coverage": "nyc --reporter=text-lcov mocha --recursive | coveralls",
     "lint": "eslint lib/ test/"
   },
-  "author": "Sebastian Van Sande",
+  "author": "Pietro Paolo Ferrari",
   "license": "MIT",
   "keywords": [
     "migrate mongo mongodb migrations database"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/seppevs/migrate-mongo.git"
-  },
   "engines": {
     "node": ">=8"
   },
@@ -56,8 +52,5 @@
     "parserOptions": {
       "ecmaVersion": 2018
     }
-  },
-  "publishConfig": {
-    "registry": "http://nexus.secreloaded.sec/repository/devops-npm/"
   }
 }

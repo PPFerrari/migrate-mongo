@@ -1,10 +1,27 @@
 # migrate-mongo
 A database migration tool for MongoDB in Node.
 
-## Changelog
+## Release notes
 
-2019-09-16 - Added hash calculcation (v1.0.0)
-2019-09-30 - Added basic support for transaction (v1.1.0)
+## v1.2.0 Release Notes - November 5, 2019
+
+### **New Features**
+
+* **ADDS** "clean" action - Users can now use the "clean" action to clean the database. This action will drop ALL the collections inside the database and the database itself.
+
+## v1.1.1 Release Notes - October 29, 2019
+
+### **Bug fixes**
+
+* **FIXES** issue with file naming convention
+
+## v1.1.0 Release Notes - Septmber 30, 2019
+
+### **New Features**
+
+* **ADDS** transaction support
+
+## Documentation
 
 ## Files naming convention
 

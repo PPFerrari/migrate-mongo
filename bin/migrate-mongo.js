@@ -122,6 +122,10 @@ program
     migrateMongo.database
       .connect()
       .then(dbOject => migrateMongo.clean(dbOject.db))
+      .then(result => {
+        console.log(result)
+        process.exit(0);
+      })
       .catch(err => {
         handleError(err);
       });

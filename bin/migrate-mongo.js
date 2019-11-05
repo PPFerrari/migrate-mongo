@@ -112,6 +112,21 @@ program
       });
   });
 
+  
+program
+  .command("clean")
+  .description("drop al collections in a database")
+  .option("-f --file <file>", "use a custom config file")
+  .action(options => {
+    global.options = options;
+    migrateMongo.database
+      .connect()
+      .then(dbOject => migrateMongo.clean(dbOject.db))
+      .catch(err => {
+        handleError(err);
+      });
+  });
+
 program.parse(process.argv);
 
 if (_.isEmpty(program.args)) {

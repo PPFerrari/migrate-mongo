@@ -1,6 +1,6 @@
 {
   "name": "acn-migrate-mongo",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "A database migration tool for MongoDB in Node, based on the migrate-mongo module",
   "main": "lib/migrate-mongo.js",
   "bin": {
